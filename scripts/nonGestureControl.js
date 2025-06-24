@@ -249,7 +249,13 @@ const handleGesture = (handIndex, gesture) => {
       // If no form is selected, start with the first one
       const currentIndex = currentForm ? formKeys.indexOf(currentForm) : -1;
       const nextIndex = (currentIndex + 1) % formKeys.length;
-      activateForm(formKeys[nextIndex]);
+      const nextForm = formKeys[nextIndex];
+      
+      // Switch both the shape mode and form
+      const newMode = nextForm === FORM_TYPE_MAPPING.star ? "star" : "basic";
+      switchShapeMode(newMode);
+      activateForm(nextForm);
+      console.log(`Switched to ${newMode} shape mode`);
       break;
     case "ILoveYou":
       // Reset schaal
