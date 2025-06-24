@@ -55,6 +55,7 @@ form {
   padding: var(--spacing-md) var(--spacing-xs);
   border-radius: var(--border-radius);
   height: 12.5rem;
+  color: var(--blue);
 }
 
 form > label {
