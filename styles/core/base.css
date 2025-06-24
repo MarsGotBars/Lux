@@ -80,6 +80,24 @@ selectedContent svg {
   fill: var(--blue);
 }
 
+a[download] {
+  background: var(--green);
+  color: var(--blue);
+  text-decoration: underline;
+  display: inline;
+  width: fit-content;
+  padding: .5rem;
+  border: 2px solid transparent;
+  transition: 0.2s ease;
+}
+
+a[download]:hover {
+  color: var(--green);
+  background: var(--blue);
+  text-decoration: underline;
+  border: 2px solid var(--white);
+}
+
 /* Media queries */
 @media (min-width: 760px) {
   body {
