@@ -152,22 +152,82 @@ const selectShapeByValue = (value, type) => {
   }, 100);
 };
 
-// --- SVG update ---
-const updateSvg = () => {
+// SVG cache to avoid re-fetching
+const svgCache = new Map();
+
+// --- SVG update using assets ---
+const updateSvg = async () => {
   const activeLabel = getActiveLabel();
   if (!activeLabel) return;
 
   const selectElement = activeLabel.querySelector("select");
-  const selectedOption = selectElement?.selectedOptions[0];
-  if (!selectedOption) return;
+  if (!selectElement) return;
 
-  const svgElement = selectedOption.querySelector("svg > *");
+  // Cross-browser way to get selected value
+  const selectedValue = selectElement.value;
+  if (!selectedValue) return;
+
   if (!previewContainer) {
     console.warn("No <svg> found in <main>");
     return;
   }
 
-  previewContainer.innerHTML = svgElement ? svgElement.outerHTML : "";
+  // Debug logging
+  console.log("updateSvg called, selectedValue:", selectedValue);
+  
+  // Clear existing content
+  while (previewContainer.firstChild) {
+    previewContainer.removeChild(previewContainer.firstChild);
+  }
+
+  try {
+    let svgContent;
+    
+    // Check cache first
+    if (svgCache.has(selectedValue)) {
+      svgContent = svgCache.get(selectedValue);
+    } else {
+      // Fetch SVG from assets
+      const response = await fetch(`assets/svg/${selectedValue}.svg`);
+      if (!response.ok) {
+        throw new Error(`Failed to load SVG: ${selectedValue}`);
+      }
+      
+      svgContent = await response.text();
+      svgCache.set(selectedValue, svgContent); // Cache for future use
+    }
+    
+         // Parse SVG content and extract the inner elements
+     const parser = new DOMParser();
+     const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+     const svgElement = svgDoc.documentElement;
+     
+     // Update the main SVG viewBox to match the asset's viewBox
+     const assetViewBox = svgElement.getAttribute('viewBox');
+     if (assetViewBox) {
+       previewContainer.setAttribute('viewBox', assetViewBox);
+     }
+     
+     // Get all child elements from the SVG (polygons, rects, etc.)
+     const svgChildren = Array.from(svgElement.children);
+     
+     if (svgChildren.length > 0) {
+       // Clone and append each child element
+       svgChildren.forEach(child => {
+         const importedChild = document.importNode(child, true);
+         previewContainer.appendChild(importedChild);
+       });
+       
+       console.log("Added SVG content to previewContainer:", selectedValue);
+     }
+    
+  } catch (error) {
+    console.error("Error loading SVG:", error);
+    // Fallback: create a simple shape if loading fails
+    const fallbackPolygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    fallbackPolygon.setAttribute("points", "25,5 45,45 5,45"); // triangle
+    previewContainer.appendChild(fallbackPolygon);
+  }
 };
 
 // --- Animation loop ---
